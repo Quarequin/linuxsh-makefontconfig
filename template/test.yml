@@ -1,20 +1,23 @@
-sans-serif:
-  - Go Noto Current-Regular
--apple-system:
-  - Go Noto Current-Regular
-Segoe UI Webfont:
-  - Go Noto Current-Regular
-Segoe UI:
-  - Go Noto Current-Regular
-arial:
-  - Go Noto Current-Regular
-serif:
-  - Go Noto Current Serif
-times:
-  - Go Noto Current Serif
-times new roman:
-  - Go Noto Current Serif
-monospace:
-  - Monaco
-  - Noto Mono
-  - Go Noto Current-Regular
+---val---:
+  - my-sans:
+    - Go Noto Current-Regular
+  - my-serif:
+    - Go Noto Current Serif
+  - my-mono:
+    - Monaco
+    - Noto Mono
+    - Go Noto Current-Regular
+
+---key---:
+  - my-sans:
+    - sans-serif
+    - -apple-system
+    - Segoe UI Webfont
+    - Segoe UI
+    - arial
+  - my-serif:
+    - serif
+    - times
+    - times new roman
+  - my-mono:
+    - monospace
