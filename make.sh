@@ -120,6 +120,21 @@ function log_status(pct, status) {
     }
 }
 
+# Recursive helper function to output family items (supports ---[[group]] expansion)
+function print_val_items(grp,   v, item, ref_grp) {
+    for (v = 1; v <= val_count[grp]; v++) {
+        item = val_items[grp, v]
+        if (item ~ /^---\[\[.*\]\]$/) {
+            ref_grp = item
+            sub(/^---\[\[/, "", ref_grp)
+            sub(/\]\]$/, "", ref_grp)
+            print_val_items(ref_grp)
+        } else {
+            print "      <family>" item "</family>"
+        }
+    }
+}
+
 {
     gsub(/\r/, "")
     
@@ -128,7 +143,7 @@ function log_status(pct, status) {
         next
     }
 
-    # Detect section headers
+    # Detect section headers (allowing optional trailing colon)
     if ($0 ~ /---val---/) {
         section = "val"
         curr_group = ""
@@ -157,7 +172,7 @@ function log_status(pct, status) {
         next
     }
 
-    # List items: e.g. "    - Noto Sans" or "    - sans-serif"
+    # List items: e.g. "    - Noto Sans" or "    - ---[[my-sans]]"
     if ($0 ~ /^[[:space:]]*-[[:space:]]+/) {
         line = $0
         sub(/^[[:space:]]*-[[:space:]]+/, "", line)
@@ -198,7 +213,6 @@ END {
     for (g = 1; g <= num_groups; g++) {
         grp = group_list[g]
         k_cnt = key_count[grp]
-        v_cnt = val_count[grp]
 
         for (k = 1; k <= k_cnt; k++) {
             target_font = key_items[grp, k]
@@ -212,9 +226,8 @@ END {
             print "    <family>" target_font "</family>"
             print "    <prefer>"
 
-            for (v = 1; v <= v_cnt; v++) {
-                print "      <family>" val_items[grp, v] "</family>"
-            }
+            # Output values and expand any embedded references recursively
+            print_val_items(grp)
 
             print "    </prefer>"
             print "  </alias>"
