@@ -10,10 +10,10 @@ DIST_CONF=""
 show_usage() {
     printf "Usage: %s [options] <source.yml> <dist.conf>\n\n" "$0"
     printf "Options:\n"
-    printf "  -v, --verbose    Show progress log without timestamps\n"
-    printf "  -f, --force      Skip interactive confirmation prompt\n"
-    printf "  -w, --overwrite  Allow overwriting existing output file\n"
-    printf "  -h, --help       Show usage instructions\n"
+    printf "  -v, --verbose        Show progress log without timestamps\n"
+    printf "  -f, --force          Skip interactive confirmation prompt\n"
+    printf "  -w, --overwrite      Allow overwriting existing output file\n"
+    printf "  -h, --help           Show usage instructions\n"
 }
 
 # Parse options and option stacking (e.g. -vfw)
@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
             printf "Error: Unknown option '%s'\n" "$1" >&2
             exit 1
             ;;
-        -[!-]*)
+        -[!-]* )
             opts="${1#-}"
             shift
             while [ -n "$opts" ]; do
@@ -107,12 +107,9 @@ TEMP_FILE="$(mktemp 2>/dev/null || echo "/tmp/fc_gen_$$")"
 # Core Generator using POSIX AWK
 awk -v verbose="$VERBOSE" '
 BEGIN {
-    print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    print "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">"
-    print "<!-- -->"
-    print "<fontconfig>"
-    print "  <!-- Generic name aliasing -->"
-    total_sections = 0
+    section = ""
+    curr_group = ""
+    num_groups = 0
 }
 
 function log_status(pct, status) {
@@ -125,62 +122,105 @@ function log_status(pct, status) {
 
 {
     gsub(/\r/, "")
-    lines[NR] = $0
-    if ($0 !~ /^[[:space:]]*#/ && $0 !~ /^[[:space:]]*$/) {
-        if ($0 ~ /:[[:space:]]*$/ && $0 !~ /^[[:space:]]*-[[:space:]]+/) {
-            total_sections++
+    
+    # Skip empty lines and comments
+    if ($0 ~ /^[[:space:]]*#/ || $0 ~ /^[[:space:]]*$/) {
+        next
+    }
+
+    # Detect section headers
+    if ($0 ~ /---val---/) {
+        section = "val"
+        curr_group = ""
+        next
+    }
+    if ($0 ~ /---key---/) {
+        section = "key"
+        curr_group = ""
+        next
+    }
+
+    # Group header: e.g. "  - my-sans:"
+    if ($0 ~ /:[[:space:]]*$/) {
+        line = $0
+        sub(/^[[:space:]]*-[[:space:]]*/, "", line)
+        sub(/:[[:space:]]*$/, "", line)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        gsub(/^["\047]|["\047]$/, "", line)
+        
+        curr_group = line
+        if (curr_group != "" && !(curr_group in group_seen)) {
+            group_seen[curr_group] = 1
+            num_groups++
+            group_list[num_groups] = curr_group
+        }
+        next
+    }
+
+    # List items: e.g. "    - Noto Sans" or "    - sans-serif"
+    if ($0 ~ /^[[:space:]]*-[[:space:]]+/) {
+        line = $0
+        sub(/^[[:space:]]*-[[:space:]]+/, "", line)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        gsub(/^["\047]|["\047]$/, "", line)
+
+        if (curr_group != "" && line != "") {
+            if (section == "val") {
+                val_count[curr_group]++
+                val_items[curr_group, val_count[curr_group]] = line
+            } else if (section == "key") {
+                key_count[curr_group]++
+                key_items[curr_group, key_count[curr_group]] = line
+            }
         }
     }
 }
 
 END {
-    if (total_sections == 0) total_sections = 1
-    current_section = 0
-    in_alias = 0
+    # Calculate total target font aliases for progress calculation
+    total_targets = 0
+    for (g = 1; g <= num_groups; g++) {
+        grp = group_list[g]
+        total_targets += key_count[grp]
+    }
+    if (total_targets == 0) total_targets = 1
 
     log_status(0, "Initializing parser...")
 
-    for (i = 1; i <= NR; i++) {
-        line = lines[i]
-        
-        if (line ~ /^[[:space:]]*#/ || line ~ /^[[:space:]]*$/) continue;
+    print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+    print "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">"
+    print "<!-- -->"
+    print "<fontconfig>"
+    print "  <!-- Generic name aliasing -->"
 
-        if (line ~ /^[[:space:]]*-[[:space:]]+/) {
-            sub(/^[[:space:]]*-[[:space:]]+/, "", line)
-            gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
-            gsub(/^["\047]|["\047]$/, "", line)
+    processed = 0
 
-            if (in_alias == 1 && line != "") {
-                print "      <family>" line "</family>"
-            }
-        }
-        else if (line ~ /:[[:space:]]*$/) {
-            sub(/^[[:space:]]*/, "", line)
-            sub(/:[[:space:]]*$/, "", line)
-            gsub(/^["\047]|["\047]$/, "", line)
+    for (g = 1; g <= num_groups; g++) {
+        grp = group_list[g]
+        k_cnt = key_count[grp]
+        v_cnt = val_count[grp]
 
-            if (in_alias == 1) {
-                print "    </prefer>"
-                print "  </alias>"
-            }
-
-            current_section++
-            pct = int((current_section / total_sections) * 100)
+        for (k = 1; k <= k_cnt; k++) {
+            target_font = key_items[grp, k]
+            processed++
+            pct = int((processed / total_targets) * 100)
             if (pct > 100) pct = 100
-            
-            log_status(pct, "Processing family: " line)
+
+            log_status(pct, "Processing alias: " target_font)
 
             print "  <alias>"
-            print "    <family>" line "</family>"
+            print "    <family>" target_font "</family>"
             print "    <prefer>"
-            in_alias = 1
+
+            for (v = 1; v <= v_cnt; v++) {
+                print "      <family>" val_items[grp, v] "</family>"
+            }
+
+            print "    </prefer>"
+            print "  </alias>"
         }
     }
 
-    if (in_alias == 1) {
-        print "    </prefer>"
-        print "  </alias>"
-    }
     print "</fontconfig>"
 
     log_status(100, "Processing complete!")
