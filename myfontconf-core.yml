@@ -1,3 +1,11 @@
+---key---:
+  - my-sans:
+    - sans-serif
+  - my-serif:
+    - serif
+  - my-mono:
+    - monospace
+
 ---val---:
   - my-sans:
     - Noto Sans
@@ -401,12 +409,4 @@
     - Noto Color Emoji
     - Noto Music
     - Go Noto Current-Regular
-
----key---:
-  - my-sans:
-    - sans-serif
-  - my-serif:
-    - serif
-  - my-mono:
-    - monospace
 

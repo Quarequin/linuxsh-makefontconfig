@@ -1,3 +1,18 @@
+---key---:
+  - my-sans:
+    - sans-serif
+    - -apple-system
+    - Segoe UI Webfont
+    - Segoe UI
+    - arial
+    - tahoma
+  - my-serif:
+    - serif
+    - times
+    - times new roman
+  - my-mono:
+    - monospace
+
 ---val---:
   - my-sans:
     - Noto Sans
@@ -401,19 +416,4 @@
     - Noto Color Emoji
     - Noto Music
     - Go Noto Current-Regular
-
----key---:
-  - my-sans:
-    - sans-serif
-    - -apple-system
-    - Segoe UI Webfont
-    - Segoe UI
-    - arial
-    - tahoma
-  - my-serif:
-    - serif
-    - times
-    - times new roman
-  - my-mono:
-    - monospace
 

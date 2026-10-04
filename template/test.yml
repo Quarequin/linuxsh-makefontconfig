@@ -1,13 +1,3 @@
----val---:
-  - my-sans:
-    - Go Noto Current-Regular
-  - my-serif:
-    - Go Noto Current Serif
-  - my-mono:
-    - Monaco
-    - Noto Mono
-    - Go Noto Current-Regular
-
 ---key---:
   - my-sans:
     - sans-serif
@@ -21,3 +11,13 @@
     - times new roman
   - my-mono:
     - monospace
+
+---val---:
+  - my-sans:
+    - Go Noto Current-Regular
+  - my-serif:
+    - Go Noto Current Serif
+  - my-mono:
+    - Monaco
+    - Noto Mono
+    - Go Noto Current-Regular
