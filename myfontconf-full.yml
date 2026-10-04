@@ -14,6 +14,9 @@
     - "monospace"
 
 ---val---:
+  - my-item-sym:
+    - "Noto Color Emoji"
+    - "Noto Music"
   - my-sans:
     - "Noto Sans"
     - "Noto Sans Adlam"
@@ -192,8 +195,7 @@
     - "Noto Sans Yi"
     - "Noto Sans Zanabazar Square"
     - "Noto Sans Zanabazar"
-    - "Noto Color Emoji"
-    - "Noto Music"
+    - --[[my-item-sym]]
     - "Go Noto Current-Regular"
   - my-serif:
     - "Noto Serif"
@@ -230,11 +232,9 @@
     - "Noto Serif Thai"
     - "Noto Serif Tibetan"
     - "Noto Serif Yezidi"
-    - "Noto Color Emoji"
-    - "Noto Music"
+    - ---[[my-item-sym]]
     - "Go Noto Current Serif"
   - my-mono:
     - "Monaco"
     - "Noto Mono"
     - ---[[my-sans]]
-

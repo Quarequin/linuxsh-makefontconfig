@@ -124,9 +124,9 @@ function log_status(pct, status) {
 function print_val_items(grp,   v, item, ref_grp) {
     for (v = 1; v <= val_count[grp]; v++) {
         item = val_items[grp, v]
-        if (item ~ /^---\[\[.*\]\]$/) {
+        if (item ~ /^--+\[\[.*\]\]$/) {
             ref_grp = item
-            sub(/^---\[\[/, "", ref_grp)
+            sub(/^--+\[\[/, "", ref_grp)
             sub(/\]\]$/, "", ref_grp)
             print_val_items(ref_grp)
         } else {
@@ -172,7 +172,7 @@ function print_val_items(grp,   v, item, ref_grp) {
         next
     }
 
-    # List items: e.g. "    - Noto Sans" or "    - ---[[my-sans]]"
+    # List items: e.g. "    - Noto Sans" or "    - --[[my-item-sym]]"
     if ($0 ~ /^[[:space:]]*-[[:space:]]+/) {
         line = $0
         sub(/^[[:space:]]*-[[:space:]]+/, "", line)
