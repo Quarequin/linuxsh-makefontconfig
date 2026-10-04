@@ -188,7 +188,7 @@
     - "Noto Sans Yi"
     - "Noto Sans Zanabazar Square"
     - "Noto Sans Zanabazar"
-    - [[my-item-sym]]
+    --- my-item-sym
     - "Go Noto Current-Regular"
   - my-serif:
     - "Noto Serif"
@@ -225,9 +225,9 @@
     - "Noto Serif Thai"
     - "Noto Serif Tibetan"
     - "Noto Serif Yezidi"
-    - [[my-item-sym]]
+    --- my-item-sym
     - "Go Noto Current Serif"
   - my-mono:
     - "Monaco"
     - "Noto Mono"
-    - [[my-sans]]
+    --- my-sans

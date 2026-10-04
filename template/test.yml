@@ -20,4 +20,4 @@
   - my-mono:
     - "Monaco"
     - "Noto Mono"
-    - [[my-sans]]
+    --- my-sans

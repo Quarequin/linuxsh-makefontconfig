@@ -109,7 +109,7 @@ awk -v verbose="$VERBOSE" '
 BEGIN {
     section = ""
     curr_group = ""
-    num_groups = 0
+    num_key_groups = 0
 }
 
 function log_status(pct, status) {
@@ -120,14 +120,12 @@ function log_status(pct, status) {
     }
 }
 
-# Recursive helper function to output family items (supports [[group]] expansion)
+# Recursive helper function to output family items
 function print_val_items(grp,   v, item, ref_grp) {
     for (v = 1; v <= val_count[grp]; v++) {
         item = val_items[grp, v]
-        if (item ~ /^\[\[.*\]\]$/) {
-            ref_grp = item
-            sub(/^\[\[/, "", ref_grp)
-            sub(/\]\]$/, "", ref_grp)
+        if (item ~ /^REF:/) {
+            ref_grp = substr(item, 5)
             print_val_items(ref_grp)
         } else {
             print "      <family>" item "</family>"
@@ -143,14 +141,14 @@ function print_val_items(grp,   v, item, ref_grp) {
         next
     }
 
-    # Detect section headers (allowing optional trailing colon)
-    if ($0 ~ /---val---/) {
-        section = "val"
+    # Detect section headers (allowing optional trailing colon or spaces)
+    if ($0 ~ /^[[:space:]]*---key---/) {
+        section = "key"
         curr_group = ""
         next
     }
-    if ($0 ~ /---key---/) {
-        section = "key"
+    if ($0 ~ /^[[:space:]]*---val---/) {
+        section = "val"
         curr_group = ""
         next
     }
@@ -164,15 +162,34 @@ function print_val_items(grp,   v, item, ref_grp) {
         gsub(/^["\047]|["\047]$/, "", line)
         
         curr_group = line
-        if (curr_group != "" && !(curr_group in group_seen)) {
-            group_seen[curr_group] = 1
-            num_groups++
-            group_list[num_groups] = curr_group
+        if (curr_group != "" && section == "key") {
+            if (!(curr_group in key_group_seen)) {
+                key_group_seen[curr_group] = 1
+                num_key_groups++
+                key_group_list[num_key_groups] = curr_group
+            }
         }
         next
     }
 
-    # List items: e.g. "    - Noto Sans" or "    - [[my-item-sym]]"
+    # Reference item in "val" section: e.g. "    --- my-item-sym" or "    - --- my-item-sym" or "    - [[my-item-sym]]"
+    if (section == "val" && ($0 ~ /^[[:space:]]*(-[[:space:]]+)?---[[:space:]]+/ || $0 ~ /^[[:space:]]*(-[[:space:]]+)?\[\[/)) {
+        line = $0
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        sub(/^-?[[:space:]]*---[[:space:]]*/, "", line)
+        sub(/^-?[[:space:]]*\[\[[[:space:]]*/, "", line)
+        sub(/\]\]$/, "", line)
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        gsub(/^["\047]|["\047]$/, "", line)
+
+        if (curr_group != "" && line != "") {
+            val_count[curr_group]++
+            val_items[curr_group, val_count[curr_group]] = "REF:" line
+        }
+        next
+    }
+
+    # Standard list items: e.g. "    - "sans-serif""
     if ($0 ~ /^[[:space:]]*-[[:space:]]+/) {
         line = $0
         sub(/^[[:space:]]*-[[:space:]]+/, "", line)
@@ -180,7 +197,14 @@ function print_val_items(grp,   v, item, ref_grp) {
         gsub(/^["\047]|["\047]$/, "", line)
 
         if (curr_group != "" && line != "") {
-            if (section == "val") {
+            if (line ~ /^---[[:space:]]*/ || line ~ /^\[\[.*\]\]$/) {
+                sub(/^---[[:space:]]*/, "", line)
+                sub(/^\[\[/, "", line)
+                sub(/\]\]$/, "", line)
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+                val_count[curr_group]++
+                val_items[curr_group, val_count[curr_group]] = "REF:" line
+            } else if (section == "val") {
                 val_count[curr_group]++
                 val_items[curr_group, val_count[curr_group]] = line
             } else if (section == "key") {
@@ -194,8 +218,8 @@ function print_val_items(grp,   v, item, ref_grp) {
 END {
     # Calculate total target font aliases for progress calculation
     total_targets = 0
-    for (g = 1; g <= num_groups; g++) {
-        grp = group_list[g]
+    for (g = 1; g <= num_key_groups; g++) {
+        grp = key_group_list[g]
         total_targets += key_count[grp]
     }
     if (total_targets == 0) total_targets = 1
@@ -210,8 +234,8 @@ END {
 
     processed = 0
 
-    for (g = 1; g <= num_groups; g++) {
-        grp = group_list[g]
+    for (g = 1; g <= num_key_groups; g++) {
+        grp = key_group_list[g]
         k_cnt = key_count[grp]
 
         for (k = 1; k <= k_cnt; k++) {
@@ -226,7 +250,7 @@ END {
             print "    <family>" target_font "</family>"
             print "    <prefer>"
 
-            # Output values and expand any embedded references recursively
+            # Output values and expand any embedded group references recursively
             print_val_items(grp)
 
             print "    </prefer>"
