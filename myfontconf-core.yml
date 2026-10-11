@@ -228,6 +228,13 @@
     --- my-item-sym
     - "Go Noto Current Serif"
   - my-mono:
+    - "DejaVu Sans Mono"
+    - "Liberation Mono"
     - "Monaco"
-    - "Noto Mono"
+    - "Noto Sans Mono"
+    - "Noto Sans Mono CJK HK"
+    - "Noto Sans Mono CJK JP"
+    - "Noto Sans Mono CJK KR"
+    - "Noto Sans Mono CJK SC"
+    - "Noto Sans Mono CJK TC"
     --- my-sans
