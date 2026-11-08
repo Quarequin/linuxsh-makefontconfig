@@ -5,14 +5,16 @@
     - "-apple-system"
     - "Segoe UI Webfont"
     - "Segoe UI"
-    - "arial"
-    - "tahoma"
+    - "Arial"
+    - "Tahoma"
     - "Ubuntu"
+    - "Roboto"
   - my-serif:
     - "serif"
     - "times"
     - "times new roman"
   - my-mono:
+    - "mono"
     - "monospace"
 
 ---val---:
